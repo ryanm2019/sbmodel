@@ -1,0 +1,24 @@
+## Results
+
+### Model’s Accuracy
+
+Before delving into the model's findings, it's essential to discuss its accuracy. Our analysis revealed that our model achieves an approximate accuracy of 75%. This assessment is based on several factors, including the area under the ROC curve, contingency tables measuring precision versus accuracy, and the distribution of deviance residuals in the histogram.
+
+The histogram of deviance residuals exhibits a slight right bias, which can be attributed to two main factors:
+
+1. **Incomplete Data:** Our dataset did not include all variables that contribute to stolen base success. While we did not expect to have access to every relevant detail, the absence of some critical variables likely affects the accuracy of our model.
+
+2. **Data Imputation:** To conduct a comprehensive analysis, we addressed missing data by employing various imputation methods to estimate and replace missing values. However, the imputation process introduces uncertainty as the imputed values are approximations. This uncertainty may have contributed to the model's moderate discriminatory performance.
+
+### Summary of Predicted Probabilities and Coefficients
+
+Moving on to the model's output, it predicts, on average, a 76% chance of a successful stolen base attempt. This estimation closely aligns with the actual success rate observed in the dataset, indicating that our model effectively predicts stolen base outcomes.
+
+Analyzing the coefficients for stolen base success, we observe that all metrics are statistically significant except for "Plate Time y0." Looking at the estimate factors, we find that:
+
+- For each one-unit increase in the secondary lead distance, the log-odds of a successful stolen base attempt increase by 0.08753. In simpler terms, a longer secondary lead distance is associated with a higher likelihood of a successful stolen base attempt.
+
+- However, for "Pick Off Steal Exchange," for every one-unit increase in the pick-off steal exchange time, the log-odds of a successful stolen base attempt decrease by 1.177. This means that a faster pick-off steal exchange is associated with a higher likelihood of an unsuccessful stolen base.
+
+Ryan Madrigal 
+ryanm2019@gmail.com
