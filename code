@@ -1,0 +1,96 @@
+# Load required libraries
+library(dplyr)
+library(mice)
+library(car)
+library(ROCR)
+library(PRROC)
+
+# Download and load CSV data
+steal_context <- read.csv("StealContext copy.csv", stringsAsFactors = FALSE)
+steal_metrics <- read.csv("StealPlayMetrics copy.csv", stringsAsFactors = FALSE)
+
+# Merge the data
+merged_data <- merge(steal_context, steal_metrics, by = "PlayGuid")
+
+# Impute missing values using MICE
+imputed_columns <- merged_data[c("Secondary_Lead_Distance", "Plate_Time_y0", "Plate_Time_y17", "Pop_Time", "PickOff_Steal_Exchange")]
+set.seed(42)
+complete_data <- complete(mice(imputed_columns))
+
+# Update the original dataset with imputed values
+merged_data$Secondary_Lead_Distance <- complete_data$Secondary_Lead_Distance
+merged_data$Plate_Time_y0 <- complete_data$Plate_Time_y0
+merged_data$Plate_Time_y17 <- complete_data$Plate_Time_y17
+merged_data$Pop_Time <- complete_data$Pop_Time
+merged_data$PickOff_Steal_Exchange <- complete_data$PickOff_Steal_Exchange
+
+# Build the logistic regression model
+model <- glm(Advance ~ Secondary_Lead_Distance + Plate_Time_y0 + Plate_Time_y17 + Pop_Time + PickOff_Steal_Exchange,
+             data = merged_data, family = binomial)
+
+# Display model summary and VIF
+summary(model)
+vif(model)
+
+# Split the data into training and testing sets
+set.seed(42)
+split <- sample.split(merged_data$Advance, SplitRatio = 0.80)
+baseballTrain <- subset(merged_data, split == TRUE)
+baseballTest <- subset(merged_data, split == FALSE)
+
+# Fit the logistic regression model on the training data
+baseballLOG <- glm(Advance ~ Secondary_Lead_Distance + Plate_Time_y0 + Plate_Time_y17 + Pop_Time + PickOff_Steal_Exchange,
+                   data = baseballTrain, family = binomial)
+
+# Summary of the logistic regression model on training data
+summary(baseballLOG)
+
+# Predict on training data
+predictTrain <- predict(baseballLOG, type = "response")
+
+# Create a confusion matrix for different threshold values
+table(baseballTrain$Advance, predictTrain > 0.5)
+table(baseballTrain$Advance, predictTrain > 0.7)
+table(baseballTrain$Advance, predictTrain > 0.8)
+table(baseballTrain$Advance, predictTrain > 0.2)
+
+# Create ROC and precision-recall curves
+par(mar = c(1, 1, 1, 1))
+pred <- prediction(predictTrain, baseballTrain$Advance)
+ROCRperf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(ROCRperf, col = "blue", main = "ROC Curve", xlab = "False Positive Rate", ylab = "True Positive Rate")
+plot(ROCRperf, colorize = TRUE, print.cutoffs.at = seq(0, 1, by = 0.1), text.adj = c(-0.2, 1.7))
+
+RPCperf <- performance(pred, measure = "prec", x.measure = "rec")
+plot(RPCperf)
+plot(RPCperf, colorize = TRUE)
+plot(RPCperf, colorize = TRUE, print.cutoffs.at = seq(0.7, 0.9, by = 0.1), text.adj = c(-0.2, 1.7))
+
+# Predict on the testing data
+predictTest <- predict(baseballLOG, type = "response", newdata = baseballTest)
+
+# Create prediction objects for ROC and precision-recall curves
+ROCRpredTest <- prediction(predictTest, baseballTest$Advance)
+
+# Calculate AUC for ROC and precision-recall curves
+auc <- as.numeric(performance(ROCRpredTest, "auc")@y.values)
+PRCperf <- performance(ROCRpredTest, "prec", "rec")
+auc_prc <- as.numeric(performance(ROCRpredTest, "auc")@y.values)
+
+ROCRperf <- performance(ROCRpredTest, "tpr", "fpr")
+auc_roc <- as.numeric(performance(ROCRpredTest, "auc")@y.values)
+
+# Adjust the dimensions of the plot
+par(mar = c(5, 5, 4, 2))
+
+# Plot the precision-recall curve
+plot(RPCperf, colorize = TRUE, print.cutoffs.at = seq(0.6, 0.9, by = 0.1), text.adj = c(-0.2, 1.7))
+
+# Calculate and display deviance residuals
+residuals(model, type = "deviance")
+deviance_residuals <- residuals(model, type = "deviance")
+
+# Plot deviance residuals against fitted values
+plot(fitted(model), deviance_residuals, ylab = "Deviance Residuals", xlab = "Fitted Values")
+hist(deviance_residuals, breaks = 20, col = "lightblue", main = "Histogram of Deviance Residuals")
+hist(deviance_residuals, breaks = 20, col = "lightblue", main = "Histogram of Deviance Residuals", xlab = "Deviance Residuals")
