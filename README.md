@@ -49,9 +49,7 @@ The dataset used for this analysis contains sensitive information and is not pub
 
 - [code/](code/): Contains the R code used for data preprocessing and modeling.
 - [data/](data/): Placeholder for data files (not included due to privacy concerns).
-- [docs/](docs/): Documentation and additional project materials.
 - [results/](results/): Contains the results and visualizations generated from the analysis.
-- [LICENSE](LICENSE): This project is licensed under [choose an appropriate license] (link to license file).
 
 Please note that this repository primarily serves as a demonstration of my skills and expertise in the field of baseball analytics and data science. If you have any questions or would like to discuss my work further, please feel free to reach out.
 
